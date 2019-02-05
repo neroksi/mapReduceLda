@@ -42,9 +42,3 @@ def preprocessAndGetTokens(doc):
     tokens = removeStopwords(tokens)
     tokens = getStem(tokens)
     return tokens
-
-def processPaperAbstract(docstr):
-    doc = json.loads(docstr)
-    abstract = doc["paperAbstract"]
-    tokens = np.array(preprocessAndGetTokens(abstract))
-    return (doc["id"], tokens)
