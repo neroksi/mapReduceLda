@@ -3,7 +3,7 @@
 
 import numpy as np
 from datetime import datetime
-import pickle as pkl, json, os
+import pickle as pkl, json, os, shutil
 from fileUtils import load, saveByPartition, dump
 
 def initDocCounts(ind, part, nbDocs,nbTopics):
@@ -81,18 +81,30 @@ def getUniqueWords(ind, part):
     """Make vocabularies, a global one  and partition-specific ones.
     Each partion vacabulary is stored into disk"""
     
-    vocab = np.array([])
+    vocabs = np.array([])
+    V = []
+    docs = []
+    i = 0
+    k1 = 25
     
     for el in part :
-        vocab = np.union1d(vocab, el[1][1])
+        V.append(el[1])
+        docs.append(el[0])
+        i += 1
+        if i%k1 == 0 :
+            vocabs = np.union1d(vocabs, np.concatenate(V))
+       
+    if i%k1 != 0 :
+        vocabs = np.union1d(vocabs, np.concatenate(V))
         
-    return [vocab]
+    return [(vocabs, np.array(docs))]
     
 
 def makeVocabularies(uniqueWordsByPartition, mode = "wb"):
 
     vocabAll = np.unique(np.concatenate(uniqueWordsByPartition)) # Global vocabulary
     vocabAll =  {w:ind for w,ind in zip(vocabAll, range(len(vocabAll))) }
+    
     with open("matrix/vocabulary/vocabAll", mode) as f :
         pkl.dump(vocabAll, f)
     nvocabs = len(uniqueWordsByPartition)
@@ -106,6 +118,17 @@ def makeVocabularies(uniqueWordsByPartition, mode = "wb"):
         print("Vocabulary %d successfully built"%i)
     print("\n Global vocabulary  built too")
 
+def makeVocabulariesFolder():
+    if os.path.exists("matrix/vocabulary/") :
+        shutil.rmtree("matrix/vocabulary/")
+    os.mkdir("matrix/vocabulary/")
+    
+
+def makeDocsMapsFolder():
+    if os.path.exists("matrix/docsMap/") :
+        shutil.rmtree("matrix/docsMap/")
+        
+    os.mkdir("matrix/docsMap/")
 
 def makeDocsMaps(ind,part, mode = "wb"):
     """Build a (docId, docNum) map, where docNum range from 0 to Ndocs -1. One map per partition.
@@ -115,7 +138,7 @@ def makeDocsMaps(ind,part, mode = "wb"):
     docs = []
     
     for el in part :
-        docs.append(el[1][0])
+        docs.append(el[0])
         
     partDocLocId = {doc :ind for doc, ind in zip(docs , range(len(docs))) }
     with open("matrix/docsMap/docs__%04d__"%ind, mode ) as f :
@@ -157,10 +180,10 @@ def get_now():
 
 
 
-def encode(ind, part, docs, vocabs):
-    for x in part :
-        el = x[1]
-        yield (docs[ind][el[0]], np.array([vocabs[x[0]][w][0] for w in el[1]]) )
+def encodeAddTopics(ind, part, docs, vocabs):
+    
+    for el in part :
+        yield (docs[ind][el[0]], np.array([vocabs[ind][w][0] for w in el[1]]), np.random.choice(nbTopics, len(el[1]) ))
 
 def loadDocsAll(nbPartitions):
     docsAll ={}
