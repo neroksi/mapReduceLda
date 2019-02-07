@@ -26,9 +26,14 @@ def pldaMap0(ind, part, alpha, beta, nbVocabAll, nbTopics):
             deltaWords[w,t] -= 1
             countWords[w,t] -= 1
             sumWordTopics[t] -= 1
+            
+            if any([cDoc[t] <0, countWords[w,t] < 0, sumWordTopics[t] < 0]):
+                raise ValueError("YYYYYYYYYYYYYYYY",ind, el[0],w, t, cDoc,
+                                             countWords, sumWordTopics)
 
             proba = (cDoc + alpha)*(countWords[w] + beta)/(sumWordTopics + nbVocabAll*beta)
-        
+            if (proba<=0).any():
+                raise ValueError("XXXXXXXXXXXXXXXXXX", proba.round(2), cDoc, countWords[w], sumWordTopics )
             tnew = np.random.choice(nbTopics, p =proba/proba.sum())
             
             cDoc[tnew] += 1
@@ -39,9 +44,10 @@ def pldaMap0(ind, part, alpha, beta, nbVocabAll, nbTopics):
             tnews.append(tnew)
             
         countDocs[el[0],:] = cDoc
-        yield (el[0],el[1], np.array(tnews))
+        yield (ind, (el[0],el[1], np.array(tnews)))
     
     dump(deltaWords, "matrix/deltaWords/deltas__%04d__"%ind )
+    dump(countDocs, "matrix/countDocs/docs__%04d__"%ind )
 
 
 
@@ -61,6 +67,10 @@ def plda_one(batchstr, countDocs, countWords,deltaWords, sumWordTopics, alpha, b
                         deltaWords[w,t] -= 1
                         countWords[w,t] -= 1
                         sumWordTopics[t] -= 1
+
+                        if any([cDoc[t] <0, countWords[w,t] < 0, sumWordTopics[t] < 0]):
+                            raise ValueError("YYYYYYYYYYYYYYYY",batchstr, el[0],w, t, cDoc[t],
+                                             countWords[w,t], sumWordTopics[t])
 
                         proba = (cDoc + alpha)*(countWords[w] + beta)/(sumWordTopics + nbVocabAll*beta)
 

@@ -26,6 +26,7 @@ def initWordCounts(ind, part, nbVocabs,nbTopics):
     countWords = np.zeros((nbVocabs, nbTopics))
     
     for el in part :
+        assert len(el[1]) == len(el[2])
         countWords[el[1], el[2]] += 1
             
     file = "matrix/countWords/words__%04d__"%ind
@@ -81,28 +82,42 @@ def getUniqueWords(ind, part):
     """Make vocabularies, a global one  and partition-specific ones.
     Each partion vacabulary is stored into disk"""
     
-    vocabs = np.array([])
-    V = []
+    vocabs = set()
     docs = []
-    i = 0
-    k1 = 25
-    
     for el in part :
-        V.append(el[1])
+        vocabs = vocabs.union(set(el[1]))
         docs.append(el[0])
-        i += 1
-        if i%k1 == 0 :
-            vocabs = np.union1d(vocabs, np.concatenate(V))
-       
-    if i%k1 != 0 :
-        vocabs = np.union1d(vocabs, np.concatenate(V))
         
-    return [(vocabs, np.array(docs))]
+    return [(np.array(docs), np.array(list(vocabs)))]
+    
+    
+def getUniqueWords2(ind, part):
+    """Make vocabularies, a global one  and partition-specific ones.
+    Each partion vacabulary is stored into disk"""
+    
+    vocabs = np.empty(0)
+    L = []
+    k = 50
+    i = 0
+    docs = []
+    for el in part :
+        L.append(el[1])
+        i += 1
+        if i%k == 0 :
+            vocabs = np.union1d(vocabs, np.concatenate(L))
+            L = []
+        docs.append(el[0])
+        
+    vocabs = np.union1d(vocabs, np.concatenate(L))
+        
+    return [(np.array(docs), np.array(vocabs))]
     
 
 def makeVocabularies(uniqueWordsByPartition, mode = "wb"):
-
-    vocabAll = np.unique(np.concatenate(uniqueWordsByPartition)) # Global vocabulary
+    vocabAll = uniqueWordsByPartition[0]
+    for words in uniqueWordsByPartition :
+        vocabAll = np.union1d(vocabAll, words) 
+#     vocabAll = np.unique(np.concatenate(uniqueWordsByPartition)) # Global vocabulary
     vocabAll =  {w:ind for w,ind in zip(vocabAll, range(len(vocabAll))) }
     
     with open("matrix/vocabulary/vocabAll", mode) as f :
@@ -139,7 +154,7 @@ def makeDocsMaps(ind,part, mode = "wb"):
     
     for el in part :
         docs.append(el[0])
-        
+    docs = set(docs)   
     partDocLocId = {doc :ind for doc, ind in zip(docs , range(len(docs))) }
     with open("matrix/docsMap/docs__%04d__"%ind, mode ) as f :
         pkl.dump(partDocLocId, f)
@@ -180,10 +195,13 @@ def get_now():
 
 
 
-def encodeAddTopics(ind, part, docs, vocabs):
+def encodeAddTopics(ind, part, docs, vocabs, nbTopics):
     
     for el in part :
-        yield (docs[ind][el[0]], np.array([vocabs[ind][w][0] for w in el[1]]), np.random.choice(nbTopics, len(el[1]) ))
+        try :
+            yield (ind, (docs[el[0]], np.array([vocabs[w][0] for w in el[1]]), np.random.choice(nbTopics, len(el[1]) )))
+        except :
+            raise ValueError("OAAAAAAAAAAAAAAAAAAAAAAAAASDD", ind, el)
 
 def loadDocsAll(nbPartitions):
     docsAll ={}
@@ -196,7 +214,7 @@ def loadDocsAll(nbPartitions):
 
 
 def init(corpTop,vocabs, nbDocs, nbVocabs, nvocabAll, nbTopics):
-    corpTop.mapPartitionsWithIndex(saveByPartition).collect()
+#     corpTop.mapPartitionsWithIndex(saveByPartition).collect()
 
     corpTop.mapPartitionsWithIndex(lambda ind, part : initDocCounts(ind, part, nbDocs[ind], nbTopics)).collect()
     corpTop.mapPartitionsWithIndex(lambda ind, part : initWordCounts(ind, part, nbVocabs[ind], nbTopics)).collect()

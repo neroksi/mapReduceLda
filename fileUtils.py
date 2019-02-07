@@ -67,12 +67,8 @@ def pickleLoader(pklFile):
     
     
 def saveAsPickleFile(rdd):
-    delete = False
-    if os.path.exists("pickle/") :
-        if os.path.exists("pickle_old/"):
-            shutil.rmtree("pickle_old/")
-        os.renames("pickle/", "pickle_old/")
-        delete = True
-    rdd.saveAsPickleFile("pickle")
-    if delete :
-        shutil.rmtree("pickle_old")
+    if os.path.exists("pickle_old/") :
+          shutil.rmtree("pickle_old/")
+    rdd.saveAsPickleFile("pickle_old")
+    shutil.rmtree("pickle/")
+    os.renames("pickle_old/", "pickle")

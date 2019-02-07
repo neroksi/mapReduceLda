@@ -30,8 +30,16 @@ def removeStopwords(tokens):
     return set(w for w in tokens if w not in stpwd and len(w) > 1 )
 
 
-def getStem(tokens):
-    return list(set(stemmer(w)  for w in tokens))
+def getStem(tokens, removeStopwords = True):
+    S = set()
+    for w in tokens:
+        w = stemmer(w)
+        if len(w) > 1:
+            S.add(w)
+    if removeStopwords :
+        S = S.difference(stpwd)
+    return list(S)
+
 
 def preprocessAndGetTokens(doc):
     doc = doc.lower()
@@ -39,6 +47,6 @@ def preprocessAndGetTokens(doc):
     doc = alphaAndSpaceOnly(doc)
     doc = removeMultipleSpaces(doc)
     tokens = getTokens(doc)
-    tokens = removeStopwords(tokens)
-    tokens = getStem(tokens)
+#     tokens = removeStopwords(tokens)
+    tokens = getStem(tokens, removeStopwords= removeStopwords)
     return tokens
