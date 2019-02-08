@@ -19,7 +19,7 @@ def dump(obj,path, mode = "wb"):
 
 
 
-def saveByPartition(ind, part, folder = "matrix/corpusTopic", mode = "wb", batchsize = 10):
+def saveByPartition(ind, part, folder = "pickle", mode = "wb", batchsize = 10):
     """Save a rdd, mappped with partition index into disk. """
     
     root = folder + "/partition__%04d__"%ind # Root file by partition

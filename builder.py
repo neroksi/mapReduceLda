@@ -83,12 +83,12 @@ def getUniqueWords(ind, part):
     Each partion vacabulary is stored into disk"""
     
     vocabs = set()
-    docs = []
+#     docs = []
     for el in part :
         vocabs = vocabs.union(set(el[1]))
-        docs.append(el[0])
+#         docs.append(el[0])
         
-    return [(np.array(docs), np.array(list(vocabs)))]
+    return [ np.array(list(vocabs))]
     
     
 def getUniqueWords2(ind, part):
@@ -97,20 +97,20 @@ def getUniqueWords2(ind, part):
     
     vocabs = np.empty(0)
     L = []
-    k = 50
+    k = 200
     i = 0
-    docs = []
+#     docs = []
     for el in part :
         L.append(el[1])
         i += 1
         if i%k == 0 :
             vocabs = np.union1d(vocabs, np.concatenate(L))
             L = []
-        docs.append(el[0])
+#         docs.append(el[0])
+    if len(L) :
+        vocabs = np.union1d(vocabs, np.concatenate(L))
         
-    vocabs = np.union1d(vocabs, np.concatenate(L))
-        
-    return [(np.array(docs), np.array(vocabs))]
+    return [ np.array(vocabs)]
     
 
 def makeVocabularies(uniqueWordsByPartition, mode = "wb"):
