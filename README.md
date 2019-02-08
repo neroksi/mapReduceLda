@@ -5,3 +5,4 @@ This project aims to impelement a parallel version of the Latent Dirichlet Alloc
 The core idea consists in running many concurrent Gibbs samplers. Each gibbs sampler compute its own `documents-counts` and `words-counts` matrices. At the end of each step, the `words-counts` matrix of each sampler is communicated to the master which is in charge of updating of the whole set of matrices. This is repeated until convergence ...
 
 # 3. Our implementation
+Please take check the [pLda notebook](https://github.com/neroksi/mapReduceLda/blob/master/pLda.ipynb) for detailed, setp by step presentation of our impementation.
